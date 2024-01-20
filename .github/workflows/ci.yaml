@@ -1,0 +1,57 @@
+# This is the name of the workflow as it will appear on GitHub under the Actions tab.
+name: Python application
+
+# The 'on' keyword specifies when the workflow should run.
+on:
+  # The workflow will run on every push to the 'main' branch,
+  # except when the only changes are in the 'README.md' file.
+  push:
+    branches: [ "main" ]
+    paths-ignore:
+        - 'README.md'
+  
+  # The workflow will also run on every pull request to the 'main' branch,
+  # except when the only changes are in the 'README.md' file.
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore:
+        - 'README.md'
+
+# Specifies the permissions needed by the workflow. In this case, it only needs read access to the repository's contents.
+permissions:
+  contents: read
+
+# 'jobs' define what the workflow will actually do.
+jobs:
+  # This job is named 'build'.
+  build:
+
+    # The job runs on a matrix of different environments, specified by the combination of OS and Python versions.
+    # This allows the same tests to be run in multiple environments.
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest] # The job will run on the latest versions of Ubuntu and Windows.
+        python-version: ["3.8", "3.9"] # The job will run with Python versions 3.8 and 3.9.
+
+    # 'steps' are a series of sequential tasks that make up a job.
+    steps:
+    - uses: actions/checkout@v3
+      # This step checks out the repository code so it can be used by the workflow.
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+        # This step sets up the specified version of Python for the job.
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 pytest tox tox-gh-actions
+        pip install -r requirements.txt
+        # This step upgrades pip and installs the required dependencies, including linters and testing tools.
+
+    - name: Test with tox
+      run: tox
+      # This step runs tox to execute the tests. tox will use the configuration defined in the tox.ini file to run tests across different environments.
